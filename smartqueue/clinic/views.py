@@ -4,7 +4,7 @@ from .forms import CustomUserCreationForm, AppointmentForm, FeedbackForm
 from .models import Appointment, User
 from django.utils import timezone
 from datetime import timedelta, date 
-
+from django.contrib.auth.decorators import login_required
 
 def register(request):
     if request.method == 'POST':
@@ -31,10 +31,14 @@ def user_logout(request):
     logout(request)
     return redirect('login')
 
+@login_required
 def dashboard(request):
     return render(request, 'clinic/dashboard.html')
 
+@login_required
 def book_appointment(request):
+    if request.user.role != 'patient':
+        return redirect('dashboard')
     if request.method == 'POST':
         form = AppointmentForm(request.POST)
         if form.is_valid():
@@ -44,7 +48,10 @@ def book_appointment(request):
                 return render(request, 'clinic/book_appointment.html', {'form': form})
 
             appointment = form.save(commit=False)
-            appointment.patient = request.user
+            appointment.patient = request.user 
+            if appointment.doctor == request.user:
+                form.add_error('doctor', 'You cannot book an appointment with yourself.')
+                return render(request, 'clinic/book_appointment.html', {'form': form})
             appointment.token_number = generate_token_number(appointment.doctor)
             appointment.save()
             return redirect('dashboard')
@@ -52,7 +59,10 @@ def book_appointment(request):
         form = AppointmentForm()
     return render(request, 'clinic/book_appointment.html', {'form': form})
 
+@login_required
 def give_feedback(request):
+    if request.user.role != 'patient':
+        return redirect('dashboard')
     if request.method == 'POST':
         form = FeedbackForm(request.POST)
         if form.is_valid():

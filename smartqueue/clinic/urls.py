@@ -13,5 +13,4 @@ urlpatterns = [
     path('mark_visited/<int:appointment_id>/', views.mark_visited, name='mark_visited'),
     path('skip/<int:appointment_id>/', views.skip_patient, name='skip_patient'),
     path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('feedback/', views.give_feedback, name='feedback'),
 ]

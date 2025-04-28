@@ -12,7 +12,14 @@ class AppointmentForm(forms.ModelForm):
         model = Appointment
         fields = ('doctor', 'date_time')
 
+
 class FeedbackForm(forms.ModelForm):
+    rating = forms.IntegerField(min_value=1, max_value=5, widget=forms.NumberInput(attrs={'placeholder': '1-5'}))
+
     class Meta:
         model = Feedback
         fields = ('doctor', 'rating', 'comment')
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter your feedback'}),
+        }
+
