@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>Welcome Dr. {{ request.user.username }}</h2>
+    <h3>Today's Appointments:</h3>
+    <table border="1">
+        <tr>
+            <th>Token</th>
+            <th>Patient</th>
+            <th>Time</th>
+            <th>Priority</th>
+            <th>Action</th>
+        </tr>
+        {% for appointment in appointments %}
+        <tr>
+            <td>{{ appointment.token_number }}</td>
+            <td>{{ appointment.patient.username }}</td>
+            <td>{{ appointment.date_time }}</td>
+            <td>{{ appointment.is_priority }}</td>
+            <td>
+                <a href="{% url 'prioritize_patient' appointment.id %}">Prioritize</a> |
+                <a href="{% url 'mark_visited' appointment.id %}">Visited</a> |
+                <a href="{% url 'skip_patient' appointment.id %}">Skip</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No Appointments</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

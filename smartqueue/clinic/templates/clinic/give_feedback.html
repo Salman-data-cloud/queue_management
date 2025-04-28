@@ -1,0 +1,23 @@
+<!-- clinic/templates/clinic/give_feedback.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback - Smart Queue</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'clinic/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Submit Feedback</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <textarea name="message" placeholder="Write your feedback here..." rows="5" required></textarea><br>
+            <button type="submit">Submit Feedback</button>
+        </form>
+        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+    </div>
+</body>
+</html>

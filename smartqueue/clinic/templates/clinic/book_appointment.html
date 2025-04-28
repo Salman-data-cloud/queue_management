@@ -1,0 +1,25 @@
+<!-- clinic/templates/clinic/book_appointment.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Appointment - Smart Queue</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'clinic/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Book Appointment</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Full Name" required><br>
+            <input type="email" name="email" placeholder="Email Address" required><br>
+            <input type="date" name="appointment_date" required><br>
+            <textarea name="symptoms" placeholder="Symptoms / Reason for visit" rows="4" required></textarea><br>
+            <button type="submit">Book Appointment</button>
+        </form>
+        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+    </div>
+</body>
+</html>

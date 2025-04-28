@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h2>Admin Dashboard</h2>
+    <ul>
+        <li>Total Appointments: {{ total }}</li>
+        <li>Visited Patients: {{ visited }}</li>
+        <li>Missed Appointments: {{ missed }}</li>
+        <li>Skipped Appointments: {{ skipped }}</li>
+    </ul>
+</body>
+</html>
