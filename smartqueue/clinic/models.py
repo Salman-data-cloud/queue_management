@@ -3,6 +3,20 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+class Department(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class DoctorTimeSlot(models.Model):
+    doctor = models.ForeignKey('User', on_delete=models.CASCADE, related_name='time_slots')
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __str__(self):
+        return f"{self.doctor.username}: {self.start_time} - {self.end_time}"
+    
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
@@ -10,10 +24,8 @@ class User(AbstractUser):
         ('patient', 'Patient'),
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    
-    def __str__(self):
-        return f"{self.username} ({self.role})"
-    
+    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.SET_NULL, related_name='doctors')
+
 class Appointment(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -30,7 +42,7 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"Appointment {self.id} - {self.patient} with {self.doctor} on {self.date_time}"
-
+    
 class Feedback(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks')
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_feedbacks')

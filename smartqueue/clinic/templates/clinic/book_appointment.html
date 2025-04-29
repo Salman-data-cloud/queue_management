@@ -9,16 +9,26 @@
 <body>
     <div class="container">
         <h2>Book Appointment</h2>
-        <form method="POST">
+        <form method="POST" id = "appointment-form">
             {% csrf_token %}
-            {{ form.as_p }}
-            <input type="text" name="name" placeholder="Full Name" required><br>
-            <input type="email" name="email" placeholder="Email Address" required><br>
-            <input type="date" name="appointment_date" required><br>
-            <textarea name="symptoms" placeholder="Symptoms / Reason for visit" rows="4" required></textarea><br>
-            <button type="submit">Book Appointment</button>
-        </form>
+            {{ form.department.label_tag }} {{ form.department }}
+            <br>
+            {{ form.doctor.label_tag }} {{ form.doctor }}
+            <br>
+            {{ form.date_time.label_tag }} {{ form.date_time }}
+            <br>
+            {% if form.errors %}
+                <div class="error">
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+                <button type="submit">Book Appointment</button> 
+            </form> 
         <a href="{% url 'dashboard' %}">Back to Dashboard</a>
     </div>
+    <script>
+        document.getElementById('id_department').addEventListener('change', function() {document.getElementById('appointment-form').submit();
+    });
+    </script>
 </body>
 </html>
