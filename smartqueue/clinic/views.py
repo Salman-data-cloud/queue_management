@@ -5,6 +5,7 @@ from .models import Appointment, User, Feedback, DoctorTimeSlot, Department
 from django.utils import timezone
 from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 def register(request):
     if request.method == 'POST':
@@ -49,6 +50,24 @@ def dashboard(request):
 
 @login_required
 def book_appointment(request):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if request.method == 'POST' and is_ajax:
+        # Handle AJAX requests for dynamic form updates
+        if 'department' in request.POST:
+            department_id = request.POST.get('department')
+            doctors = User.objects.filter(role='doctor', department_id=department_id)
+            return JsonResponse({
+                'doctors': [{'id': doctor.id, 'name': doctor.get_full_name() or doctor.username} for doctor in doctors]
+            })
+        elif 'doctor' in request.POST:
+            doctor_id = request.POST.get('doctor')
+            time_slots = DoctorTimeSlot.objects.filter(doctor_id=doctor_id)
+            return JsonResponse({
+                'time_slots': [{'id': slot.id, 'start_time': slot.start_time.strftime('%H:%M'), 
+                               'end_time': slot.end_time.strftime('%H:%M')} for slot in time_slots]
+            })
+
     if request.user.role != 'patient':
         return redirect('dashboard')
     if request.method == 'POST':

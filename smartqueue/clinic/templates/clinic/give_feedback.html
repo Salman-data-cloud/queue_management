@@ -1,23 +1,240 @@
-<!-- clinic/templates/clinic/give_feedback.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Feedback - Smart Queue</title>
-
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'clinic/style.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Give Feedback - Smart Queue Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .feedback-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 550px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .feedback-container h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .rating-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .star {
+            font-size: 24px;
+            cursor: pointer;
+            color: #ddd;
+        }
+        
+        .star.active {
+            color: #f1c40f;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-link {
+            margin-top: 25px;
+            display: block;
+            color: #7f8c8d;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .back-link:hover {
+            color: #3498db;
+        }
+        
+        .errorlist {
+            color: #e74c3c;
+            list-style: none;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .helptext {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .feedback-container {
+                padding: 25px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Submit Feedback</h2>
-        <form method="POST">
+    <div class="feedback-container">
+        <h1>Share Your Feedback</h1>
+        
+        <form method="post">
             {% csrf_token %}
-            <textarea name="message" placeholder="Write your feedback here..." rows="5" required></textarea><br>
-            <button type="submit">Submit Feedback</button>
+            
+            <div class="form-group">
+                <label for="{{ form.doctor.id_for_label }}">Select Doctor</label>
+                {{ form.doctor }}
+                {% if form.doctor.errors %}
+                <ul class="errorlist">
+                    {% for error in form.doctor.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.rating.id_for_label }}">Rating</label>
+                <div class="rating-container">
+                    {{ form.rating }}
+                    <div class="rating-stars">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                </div>
+                {% if form.rating.errors %}
+                <ul class="errorlist">
+                    {% for error in form.rating.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.comment.id_for_label }}">Your Comments</label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                <ul class="errorlist">
+                    {% for error in form.comment.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="submit-btn">Submit Feedback</button>
         </form>
-        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+        
+        <a href="{% url 'dashboard' %}" class="back-link">Return to Dashboard</a>
     </div>
+    
+    <script>
+        // Add class to form controls for styling
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add form-control class to all form inputs
+            const formControls = document.querySelectorAll('input, select, textarea');
+            formControls.forEach(control => {
+                control.classList.add('form-control');
+            });
+            
+            // Star rating functionality
+            const stars = document.querySelectorAll('.star');
+            const ratingInput = document.getElementById('{{ form.rating.id_for_label }}');
+            
+            // Initialize stars based on current value
+            function updateStars(value) {
+                stars.forEach(star => {
+                    star.classList.toggle('active', parseInt(star.dataset.value) <= value);
+                });
+            }
+            
+            // Set initial stars if value exists
+            if (ratingInput.value) {
+                updateStars(parseInt(ratingInput.value));
+            }
+            
+            // Add click events to stars
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const value = this.dataset.value;
+                    ratingInput.value = value;
+                    updateStars(value);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

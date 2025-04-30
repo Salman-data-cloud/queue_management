@@ -1,34 +1,414 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Book Appointment - Smart Queue</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'clinic/style.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Smart Queue Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --light-color: #f8f9fa;
+            --dark-color: #202124;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .nav-links a {
+            color: var(--dark-color);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+        
+        .appointment-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .card-header h2 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .card-header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+            outline: none;
+        }
+        
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .btn-secondary {
+            background-color: #f1f3f4;
+            color: #444;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e8eaed;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        .help-text {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+        
+        .help-text h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+        
+        .help-text p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .help-text ul {
+            padding-left: 20px;
+        }
+        
+        .help-text li {
+            margin-bottom: 5px;
+        }
+        
+        .errorlist {
+            color: var(--accent-color);
+            list-style: none;
+            padding: 0;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            background-color: #e6f4ea;
+            color: var(--secondary-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .success-message i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Book Appointment</h2>
-        <form method="POST" id = "appointment-form">
-            {% csrf_token %}
-            {{ form.department.label_tag }} {{ form.department }}
-            <br>
-            {{ form.doctor.label_tag }} {{ form.doctor }}
-            <br>
-            {{ form.date_time.label_tag }} {{ form.date_time }}
-            <br>
-            {% if form.errors %}
-                <div class="error">
-                    {{ form.errors }}
+        <div class="header">
+            <div class="logo">Smart Queue Clinic</div>
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        
+        <div class="appointment-card">
+            <div class="card-header">
+                <h2>Book an Appointment</h2>
+                <p>Select your preferred department, doctor, and time slot</p>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" id="appointment-form">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_department">Department</label>
+                        {{ form.department.errors }}
+                        {{ form.department }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_doctor">Doctor</label>
+                        {{ form.doctor.errors }}
+                        {{ form.doctor }}
+                    </div>
                 </div>
-                {% endif %}
-                <button type="submit">Book Appointment</button> 
-            </form> 
-        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_date_time">Date</label>
+                        {{ form.date_time.errors }}
+                        <input type="date" name="{{ form.date_time.name }}" id="id_date_time" class="form-control" required>
+    
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_time_slot">Available Time Slot</label>
+                        {{ form.time_slot.errors }}
+                        {{ form.time_slot }}
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn">Book Appointment</button>
+                </div>
+            </form>
+            
+            <div class="help-text">
+                <h3>Booking Information</h3>
+                <p>Please note the following when booking your appointment:</p>
+                <ul>
+                    <li>Select your preferred department first to see available doctors</li>
+                    <li>Choose a doctor to see their available time slots</li>
+                    <li>Appointments must be booked at least 3 days in advance</li>
+                    <li>You can reschedule or cancel your appointment up to 24 hours before the scheduled time</li>
+                </ul>
+            </div>
+        </div>
     </div>
+    
+    <div class="footer">
+        <p>&copy; 2025 Smart Queue Clinic Management System. All rights reserved.</p>
+    </div>
+    
     <script>
-        document.getElementById('id_department').addEventListener('change', function() {document.getElementById('appointment-form').submit();
-    });
+        // Add class to form controls for styling
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add form-control class to all form inputs
+            const formControls = document.querySelectorAll('input, select');
+            formControls.forEach(control => {
+                control.classList.add('form-control');
+            });
+            
+            // Set up the department change event
+            const departmentSelect = document.getElementById('id_department');
+            const doctorSelect = document.getElementById('id_doctor');
+            const timeSlotSelect = document.getElementById('id_time_slot');
+            const dateInput = document.getElementById('id_date_time');
+            
+            // Function to load doctors when department changes
+            departmentSelect.addEventListener('change', function() {
+                // Clear doctor and time slot selections
+                doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+                timeSlotSelect.innerHTML = '<option value="">Select Time Slot</option>';
+                
+                if (this.value) {
+                    // Create a form data object
+                    const formData = new FormData();
+                    formData.append('department', this.value);
+                    
+                    // Send AJAX request
+                    fetch('{% url "book_appointment" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.doctors) {
+                            data.doctors.forEach(doctor => {
+                                const option = document.createElement('option');
+                                option.value = doctor.id;
+                                option.textContent = doctor.name;
+                                doctorSelect.appendChild(option);
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Function to load time slots when doctor changes
+            doctorSelect.addEventListener('change', function() {
+                // Clear time slot selection
+                timeSlotSelect.innerHTML = '<option value="">Select Time Slot</option>';
+                
+                if (this.value) {
+                    // Create a form data object
+                    const formData = new FormData();
+                    formData.append('doctor', this.value);
+                    
+                    // Send AJAX request
+                    fetch('{% url "book_appointment" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.time_slots) {
+                            data.time_slots.forEach(slot => {
+                                const option = document.createElement('option');
+                                option.value = slot.id;
+                                option.textContent = `${slot.start_time} - ${slot.end_time}`;
+                                timeSlotSelect.appendChild(option);
+                            });
+                        }
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
