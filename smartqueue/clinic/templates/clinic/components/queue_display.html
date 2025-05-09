@@ -1,0 +1,213 @@
+{% load static %}
+<div class="queue-display">
+    <div class="queue-header">
+        <h3>Live Queue</h3>
+        <div class="queue-stats">
+            <span class="stat-item">
+                <i class="fas fa-users"></i>
+                <span class="count">{{ waiting_count }}</span>
+                <span class="label">Waiting</span>
+            </span>
+            <span class="stat-item">
+                <i class="fas fa-user-check"></i>
+                <span class="count">{{ visited_count }}</span>
+                <span class="label">Visited</span>
+            </span>
+            <span class="stat-item">
+                <i class="fas fa-star"></i>
+                <span class="count">{{ priority_count }}</span>
+                <span class="label">Priority</span>
+            </span>
+        </div>
+    </div>
+    
+    <div class="queue-list">
+        {% if appointments %}
+            {% for appointment in appointments %}
+            <div class="queue-item {% if appointment.is_priority %}priority{% endif %}">
+                <div class="token-number">
+                    <span class="number">{{ appointment.token_number }}</span>
+                    {% if appointment.is_priority %}
+                    <i class="fas fa-star priority-icon"></i>
+                    {% endif %}
+                </div>
+                <div class="patient-info">
+                    <div class="name">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</div>
+                    <div class="time">{{ appointment.date_time|date:"g:i A" }}</div>
+                </div>
+                <div class="status-badge {{ appointment.status }}">
+                    {{ appointment.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-queue">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No patients in queue</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.queue-display {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.queue-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.queue-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-item i {
+    color: #3498db;
+}
+
+.stat-item .count {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.stat-item .label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.queue-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.queue-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s;
+}
+
+.queue-item:last-child {
+    border-bottom: none;
+}
+
+.queue-item:hover {
+    background-color: #f8f9fa;
+}
+
+.queue-item.priority {
+    background-color: rgba(251, 188, 5, 0.1);
+}
+
+.token-number {
+    width: 60px;
+    text-align: center;
+}
+
+.token-number .number {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.priority-icon {
+    color: #f1c40f;
+    margin-left: 5px;
+}
+
+.patient-info {
+    flex: 1;
+    margin: 0 20px;
+}
+
+.patient-info .name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.patient-info .time {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-badge.visited {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.missed {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.status-badge.skipped {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.empty-queue {
+    text-align: center;
+    padding: 40px 20px;
+    color: #95a5a6;
+}
+
+.empty-queue i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.empty-queue p {
+    margin: 0;
+    font-size: 1rem;
+}
+</style>
+
+<script>
+function updateQueue() {
+    fetch('/api/queue-status/')
+        .then(response => response.json())
+        .then(data => {
+            // Update queue display with new data
+            const queueList = document.querySelector('.queue-list');
+            // Update queue items
+            // Update stats
+        });
+}
+
+// Update queue every 30 seconds
+setInterval(updateQueue, 30000);
+</script> 

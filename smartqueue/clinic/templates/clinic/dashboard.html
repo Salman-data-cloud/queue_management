@@ -222,30 +222,10 @@
         <div class="dashboard-grid">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Upcoming Appointments</h3>
+                    <h3 class="card-title">Live Queue Status</h3>
                 </div>
                 <div class="card-content">
-                    <ul class="appointment-list">
-                        {% for appointment in appointments %}
-                            <li class="appointment-item">
-                                <div class="appointment-details">
-                                    <div class="appointment-doctor">Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}</div>
-                                    <div class="appointment-date">{{ appointment.date_time|date:"F j, Y, g:i a" }}</div>
-                                </div>
-                                <div class="appointment-token">
-                                    Token: {{ appointment.token_number }}
-                                    {% if appointment.is_priority %}
-                                        <span class="priority-badge">Priority</span>
-                                    {% endif %}
-                                </div>
-                            </li>
-                        {% empty %}
-                            <div class="empty-state">
-                                <p>No upcoming appointments.</p>
-                                <p>Book your first appointment to get started!</p>
-                            </div>
-                        {% endfor %}
-                    </ul>
+                    {% include 'clinic/components/queue_display.html' %}
                 </div>
             </div>
             

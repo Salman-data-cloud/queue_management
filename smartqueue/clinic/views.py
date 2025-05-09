@@ -6,6 +6,9 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 
 def register(request):
     if request.method == 'POST':
@@ -13,6 +16,8 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            if user.is_superuser:
+                return redirect('admin_dashboard')
             if user.role == 'doctor':
                 return redirect('doctor_dashboard')
             elif user.role == 'admin':
@@ -30,6 +35,8 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None and user.is_active:
             login(request, user)
+            if user.is_superuser:
+                return redirect('admin_dashboard')
             if user.role == 'doctor':
                 return redirect('doctor_dashboard')
             elif user.role == 'admin':
@@ -46,7 +53,36 @@ def user_logout(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'clinic/dashboard.html')
+    user = request.user
+    today = timezone.now().date()
+    
+    if user.role == 'patient':
+        appointments = Appointment.objects.filter(
+            patient=user,
+            date_time__date=today
+        ).order_by('token_number')
+    elif user.role == 'doctor':
+        appointments = Appointment.objects.filter(
+            doctor=user,
+            date_time__date=today
+        ).order_by('token_number')
+    else:  # admin
+        appointments = Appointment.objects.filter(
+            date_time__date=today
+        ).order_by('token_number')
+    
+    waiting_count = appointments.filter(status='pending').count()
+    visited_count = appointments.filter(status='visited').count()
+    priority_count = appointments.filter(is_priority=True).count()
+    
+    context = {
+        'appointments': appointments,
+        'waiting_count': waiting_count,
+        'visited_count': visited_count,
+        'priority_count': priority_count,
+    }
+    
+    return render(request, 'clinic/dashboard.html', context)
 
 @login_required
 def book_appointment(request):
@@ -103,8 +139,13 @@ def book_appointment(request):
                     form.add_error('date_time', 'You already have an appointment at this time.')
                     return render(request, 'clinic/book_appointment.html', {'form': form})
                 
-            if Appointment.objects.filter(doctor=doctor, appointment_date= datetime.date(), time_slot=time_slot).exists():
-                form.add_error('time_slot', 'This doctor is already booked for this time slot.')
+            # Check if doctor has any appointment at the same time
+            if Appointment.objects.filter(
+                doctor=doctor,
+                date_time=appointment_date,
+                status='pending'
+            ).exists():
+                form.add_error('date_time', 'This doctor is already booked for this time slot.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
 
             appointment = form.save(commit=False)
@@ -154,10 +195,25 @@ def doctor_dashboard(request):
         return redirect('dashboard')
     
     update_token_status()
+    today = timezone.now().date()
     
-    appointments = Appointment.objects.filter(doctor=request.user, status='pending').order_by('token_number')
+    appointments = Appointment.objects.filter(
+        doctor=request.user,
+        date_time__date=today
+    ).order_by('token_number')
     
-    return render(request, 'clinic/doctor_dashboard/doctor_dashboard.html', {'appointments': appointments})
+    waiting_count = appointments.filter(status='pending').count()
+    visited_count = appointments.filter(status='visited').count()
+    priority_count = appointments.filter(is_priority=True).count()
+    
+    context = {
+        'appointments': appointments,
+        'waiting_count': waiting_count,
+        'visited_count': visited_count,
+        'priority_count': priority_count,
+    }
+    
+    return render(request, 'clinic/doctor_dashboard/doctor_dashboard.html', context)
 
 def prioritize_patient(request, appointment_id):
     appointment = Appointment.objects.get(id=appointment_id)
@@ -180,20 +236,112 @@ def skip_patient(request, appointment_id):
 # admin dashboard view
 @login_required
 def admin_dashboard(request):
-    if request.user.role != 'admin':
+    if not (request.user.role == 'admin' or request.user.is_superuser):
         return redirect('dashboard')
-    
-    total_appointments = Appointment.objects.count()
-    visited = Appointment.objects.filter(status='visited').count()
-    missed = Appointment.objects.filter(status='missed').count()
-    skipped = Appointment.objects.filter(status='skipped').count()
-    
+    today = timezone.now().date()
+    appointments = Appointment.objects.filter(date_time__date=today).order_by('token_number')
+    total_appointments = appointments.count()
+    visited = appointments.filter(status='visited').count()
+    missed = appointments.filter(status='missed').count()
+    skipped = appointments.filter(status='skipped').count()
+    waiting_count = appointments.filter(status='pending').count()
+    priority_count = appointments.filter(is_priority=True).count()
     context = {
         'total': total_appointments,
         'visited': visited,
         'missed': missed,
         'skipped': skipped,
+        'appointments': appointments,
+        'waiting_count': waiting_count,
+        'priority_count': priority_count,
+    }
+    return render(request, 'admin_dashboard/admin_dashboard.html', context)
+
+@login_required
+def queue_status(request):
+    user = request.user
+    today = timezone.now().date()
+    
+    if user.role == 'doctor':
+        appointments = Appointment.objects.filter(
+            doctor=user,
+            date_time__date=today
+        ).order_by('token_number')
+    elif user.role == 'patient':
+        appointments = Appointment.objects.filter(
+            patient=user,
+            date_time__date=today
+        ).order_by('token_number')
+    else:  # admin
+        appointments = Appointment.objects.filter(
+            date_time__date=today
+        ).order_by('token_number')
+    
+    waiting_count = appointments.filter(status='pending').count()
+    visited_count = appointments.filter(status='visited').count()
+    priority_count = appointments.filter(is_priority=True).count()
+    
+    data = {
+        'appointments': [
+            {
+                'token_number': app.token_number,
+                'patient_name': app.patient.get_full_name() or app.patient.username,
+                'time': app.date_time.strftime('%I:%M %p'),
+                'status': app.status,
+                'is_priority': app.is_priority
+            }
+            for app in appointments
+        ],
+        'stats': {
+            'waiting': waiting_count,
+            'visited': visited_count,
+            'priority': priority_count
+        }
     }
     
-    return render(request,'admin_dashboard/admin_dashboard.html', context)
+    return JsonResponse(data)
+
+def send_appointment_reminder(appointment):
+    """Send appointment reminder email to patient"""
+    subject = 'Appointment Reminder - Smart Queue Clinic'
+    
+    # Render email template
+    html_message = render_to_string('clinic/email/appointment_reminder.html', {
+        'appointment': appointment
+    })
+    
+    # Send email
+    send_mail(
+        subject=subject,
+        message='',  # Plain text version (empty as we're using HTML)
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[appointment.patient.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+def send_appointment_reminders():
+    """Send reminders for appointments scheduled for tomorrow"""
+    tomorrow = timezone.now().date() + timedelta(days=1)
+    
+    # Get all appointments for tomorrow
+    appointments = Appointment.objects.filter(
+        date_time__date=tomorrow,
+        status='pending'  # Only send reminders for pending appointments
+    )
+    
+    for appointment in appointments:
+        send_appointment_reminder(appointment)
+
+@login_required
+def doctor_analytics(request):
+    if request.user.role != 'doctor':
+        return redirect('dashboard')
+    return render(request, 'clinic/doctor_dashboard/doctor_analytics.html')
+
+@login_required
+def doctor_settings(request):
+    if request.user.role != 'doctor':
+        return redirect('dashboard')
+    return render(request, 'clinic/doctor_dashboard/doctor_settings.html')
 

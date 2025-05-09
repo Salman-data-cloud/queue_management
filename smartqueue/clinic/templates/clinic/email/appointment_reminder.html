@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+        }
+        .appointment-details {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Appointment Reminder</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{ appointment.patient.get_full_name|default:appointment.patient.username }},</p>
+            
+            <p>This is a reminder that you have an appointment tomorrow with Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}.</p>
+            
+            <div class="appointment-details">
+                <p><strong>Appointment Details:</strong></p>
+                <p>Date: {{ appointment.date_time|date:"F j, Y" }}</p>
+                <p>Time: {{ appointment.date_time|time:"g:i A" }}</p>
+                <p>Token Number: {{ appointment.token_number }}</p>
+                <p>Department: {{ appointment.doctor.department.name }}</p>
+            </div>
+            
+            <p>Please arrive 15 minutes before your scheduled appointment time.</p>
+            
+            <p>If you need to reschedule or cancel your appointment, please contact us as soon as possible.</p>
+            
+            <p>Best regards,<br>Smart Queue Clinic Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html> 

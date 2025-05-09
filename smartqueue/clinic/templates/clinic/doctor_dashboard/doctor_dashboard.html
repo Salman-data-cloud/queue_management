@@ -483,21 +483,19 @@
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active">
+                    <a href="{% url 'doctor_dashboard' %}" class="nav-link{% if request.path == '/doctor_dashboard/' %} active{% endif %}">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
-                
-                
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{% url 'doctor_analytics' %}" class="nav-link{% if request.path == '/doctor_dashboard/analytics/' %} active{% endif %}">
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{% url 'doctor_settings' %}" class="nav-link{% if request.path == '/doctor_dashboard/settings/' %} active{% endif %}">
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
@@ -545,7 +543,7 @@
                         <i class="fas fa-user-clock"></i>
                     </div>
                     <div class="stat-details">
-                        <h3>{{ waiting_appointments|length }}</h3>
+                        <h3>{{ waiting_count }}</h3>
                         <p>Waiting Patients</p>
                     </div>
                 </div>
@@ -555,7 +553,7 @@
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-details">
-                        <h3>{{ completed_appointments|length }}</h3>
+                        <h3>{{ visited_count }}</h3>
                         <p>Completed Today</p>
                     </div>
                 </div>
@@ -565,81 +563,19 @@
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <div class="stat-details">
-                        <h3>{{ priority_appointments|length }}</h3>
+                        <h3>{{ priority_count }}</h3>
                         <p>Priority Cases</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Appointments Card -->
+            <!-- Live Queue Display -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Today's Appointments</h3>
-                    <div class="header-actions">
-                        <a href="#" class="btn btn-outline">View All</a>
-                    </div>
+                    <h3 class="card-title">Live Queue</h3>
                 </div>
                 <div class="card-body">
-                    {% if appointments %}
-                    <table class="appointment-table">
-                        <thead>
-                            <tr>
-                                <th>Token</th>
-                                <th>Patient</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for appointment in appointments %}
-                            <tr {% if appointment.is_priority %}class="priority-row"{% endif %}>
-                                <td>
-                                    <span class="token-badge">{{ appointment.token_number }}</span>
-                                    {% if appointment.is_priority %}
-                                    <i class="fas fa-star" style="color: #fbbc05; margin-left: 5px;"></i>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div style="font-weight: 500;">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</div>
-                                    <div style="font-size: 12px; color: #666;">ID: {{ appointment.patient.id }}</div>
-                                </td>
-                                <td>{{ appointment.date_time|date:"g:i A" }}</td>
-                                <td>
-                                    <span class="status-badge {{ appointment.status|lower }}">
-                                        {{ appointment.status|title }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        {% if appointment.status == 'waiting' %}
-                                            <a href="{% url 'mark_visited' appointment.id %}" class="btn btn-success">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                            {% if not appointment.is_priority %}
-                                            <a href="{% url 'prioritize_patient' appointment.id %}" class="btn btn-warning">
-                                                <i class="fas fa-star"></i>
-                                            </a>
-                                            {% endif %}
-                                            <a href="{% url 'skip_patient' appointment.id %}" class="btn btn-danger">
-                                                <i class="fas fa-times"></i>
-                                            </a>
-                                        {% else %}
-                                            <span style="color: #666; font-size: 12px;">No actions available</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="empty-state">
-                        <i class="fas fa-calendar-day"></i>
-                        <h3>No Appointments Today</h3>
-                        <p>You have no scheduled appointments for today.</p>
-                    </div>
-                    {% endif %}
+                    {% include 'clinic/components/queue_display.html' %}
                 </div>
             </div>
             
@@ -654,14 +590,10 @@
                             <div class="action-icon">
                                 <i class="fas fa-calendar-alt"></i>
                             </div>
-                            
+                            <h4 class="action-title">View Schedule</h4>
+                            <p class="action-description">Check your daily schedule and appointments</p>
+                            <a href="#" class="btn btn-primary">View</a>
                         </div>
-                        
-                        <div class="action-card">
-                            <div class="action-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            
                         
                         <div class="action-card">
                             <div class="action-icon">
