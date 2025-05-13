@@ -56,24 +56,23 @@ def dashboard(request):
     user = request.user
     today = timezone.localtime().date()
     print('DEBUG: Today according to server:', today)
-    print('DEBUG: All appointments for today:')
-    for a in Appointment.objects.filter(date_time__date=today):
-        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}')
+    print('DEBUG: All appointments in DB:')
+    for a in Appointment.objects.all():
+        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}, TZ: {a.date_time.tzinfo}')
+    #appointments_today = Appointment.objects.filter(date_time__date=today)
+    #print('DEBUG: Appointments for today:', list(appointments_today))
+    #print('DEBUG: Raw SQL:', str(appointments_today.query))
     
     if user.role == 'patient':
         appointments = Appointment.objects.filter(
-            patient=user,
-            date_time__date=today
+            patient=user
         ).order_by('token_number')
     elif user.role == 'doctor':
         appointments = Appointment.objects.filter(
-            doctor=user,
-            date_time__date=today
+            doctor=user
         ).order_by('token_number')
     else:  # admin
-        appointments = Appointment.objects.filter(
-            date_time__date=today
-        ).order_by('token_number')
+        appointments = Appointment.objects.all().order_by('token_number')
     
     waiting_count = appointments.filter(status='pending').count()
     visited_count = appointments.filter(status='visited').count()
@@ -243,12 +242,11 @@ def doctor_dashboard(request):
     today = timezone.localtime().date()
     print('DEBUG: Today according to server:', today)
     print('DEBUG: All appointments for today (doctor):')
-    for a in Appointment.objects.filter(date_time__date=today):
-        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}')
+    for a in Appointment.objects.all():
+        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}, TZ: {a.date_time.tzinfo}')
     
     appointments = Appointment.objects.filter(
-        doctor=request.user,
-        date_time__date=today
+        doctor=request.user
     ).order_by('token_number')
     
     waiting_count = appointments.filter(status='pending').count()
@@ -289,7 +287,6 @@ def admin_dashboard(request):
     if not (request.user.role == 'admin' or request.user.is_superuser):
         return redirect('dashboard')
     today = timezone.localtime().date()
-    today = timezone.now().date()
     appointments = Appointment.objects.filter(date_time__date=today).order_by('token_number')
     total_appointments = appointments.count()
     visited = appointments.filter(status='visited').count()
@@ -311,27 +308,27 @@ def admin_dashboard(request):
 @login_required
 def queue_status(request):
     user = request.user
-    today = timezone.now().date()
-    
+    today = timezone.localtime().date()
+    print('DEBUG: Today according to server (queue):', today)
+    print('DEBUG: All appointments in DB (queue):')
+    for a in Appointment.objects.all():
+        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}, TZ: {a.date_time.tzinfo}')
+    #appointments_today = Appointment.objects.filter(date_time__date=today)
+    #print('DEBUG: Appointments for today (queue):', list(appointments_today))
+    #print('DEBUG: Raw SQL (queue):', str(appointments_today.query))
     if user.role == 'doctor':
         appointments = Appointment.objects.filter(
-            doctor=user,
-            date_time__date=today
+            doctor=user
         ).order_by('token_number')
     elif user.role == 'patient':
         appointments = Appointment.objects.filter(
-            patient=user,
-            date_time__date=today
+            patient=user
         ).order_by('token_number')
     else:  # admin
-        appointments = Appointment.objects.filter(
-            date_time__date=today
-        ).order_by('token_number')
-    
+        appointments = Appointment.objects.all().order_by('token_number')
     waiting_count = appointments.filter(status='pending').count()
     visited_count = appointments.filter(status='visited').count()
     priority_count = appointments.filter(is_priority=True).count()
-    
     data = {
         'appointments': [
             {
@@ -349,7 +346,6 @@ def queue_status(request):
             'priority': priority_count
         }
     }
-    
     return JsonResponse(data)
 
 def send_appointment_reminder(appointment):
