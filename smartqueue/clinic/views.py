@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
-from .forms import CustomUserCreationForm, AppointmentForm, FeedbackForm
-from .models import Appointment, User, Feedback, DoctorTimeSlot, Department
+from .forms import CustomUserCreationForm, AppointmentForm, FeedbackForm, MedicalRecordForm
+from .models import Appointment, User, Feedback, DoctorTimeSlot, Department, MedicalRecord
 from django.utils import timezone
 from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
@@ -54,7 +54,11 @@ def user_logout(request):
 @login_required
 def dashboard(request):
     user = request.user
-    today = timezone.now().date()
+    today = timezone.localtime().date()
+    print('DEBUG: Today according to server:', today)
+    print('DEBUG: All appointments for today:')
+    for a in Appointment.objects.filter(date_time__date=today):
+        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}')
     
     if user.role == 'patient':
         appointments = Appointment.objects.filter(
@@ -80,6 +84,7 @@ def dashboard(request):
         'waiting_count': waiting_count,
         'visited_count': visited_count,
         'priority_count': priority_count,
+        'today': today,
     }
     
     return render(request, 'clinic/dashboard.html', context)
@@ -113,19 +118,26 @@ def book_appointment(request):
             appointment_date = form.cleaned_data['date_time']
             time_slot = form.cleaned_data['time_slot']
             patient = request.user
-            if appointment_date - timezone.now() < timedelta(days=3):
-                form.add_error('date_time', 'Appointment must be at least 3 days in advance.')
-                return render(request, 'clinic/book_appointment.html', {'form': form})
-            doctor_appointments = Appointment.objects.filter(doctor = doctor,
-                                                             date_time__date=appointment_date.date(), status='pending').count()
+
+            # Combine the date from the form with the time from the time slot
+            appointment_datetime = datetime.combine(appointment_date.date(), time_slot.start_time)
+            
+            doctor_appointments = Appointment.objects.filter(
+                doctor=doctor,
+                date_time__date=appointment_date.date(), 
+                status='pending'
+            ).count()
             
             if doctor_appointments >= 10:
                 form.add_error('doctor', 'Doctor is fully booked for the day.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
             
-            patient_appointments = Appointment.objects.filter(patient=patient,
-                                                               date_time__date=appointment_date.date(), status='pending')
-            if patient_appointments.count()>2:
+            patient_appointments = Appointment.objects.filter(
+                patient=patient,
+                date_time__date=appointment_date.date(), 
+                status='pending'
+            )
+            if patient_appointments.count() > 2:
                 form.add_error(None, 'You can only book 2 doctors per day.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
             
@@ -135,27 +147,60 @@ def book_appointment(request):
                     return render(request, 'clinic/book_appointment.html', {'form': form})
 
             for i in patient_appointments:
-                if i.date_time == appointment_date:
+                if i.date_time == appointment_datetime:
                     form.add_error('date_time', 'You already have an appointment at this time.')
                     return render(request, 'clinic/book_appointment.html', {'form': form})
                 
             # Check if doctor has any appointment at the same time
             if Appointment.objects.filter(
                 doctor=doctor,
-                date_time=appointment_date,
+                date_time__date=appointment_date.date(),
+                date_time__time__gte=time_slot.start_time,
+                date_time__time__lt=time_slot.end_time,
                 status='pending'
             ).exists():
                 form.add_error('date_time', 'This doctor is already booked for this time slot.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
 
             appointment = form.save(commit=False)
-            appointment.patient = request.user 
+            appointment.patient = request.user
+            appointment.date_time = timezone.make_aware(appointment_datetime)  # Set the combined date and time as timezone-aware
             if appointment.doctor == request.user:
                 form.add_error('doctor', 'You cannot book an appointment with yourself.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
             appointment.token_number = generate_token_number(appointment.doctor)
             appointment.save()
-            return redirect('dashboard')
+
+            # Send confirmation email with token number
+            subject = 'Appointment Confirmation - Smart Queue Clinic'
+            html_message = render_to_string('clinic/email/appointment_confirmation.html', {
+                'appointment': appointment,
+                'token_number': appointment.token_number
+            })
+            
+            send_mail(
+                subject=subject,
+                message='',  # Plain text version (empty as we're using HTML)
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[appointment.patient.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            # Handle medical record upload if provided
+            if 'medical_record' in request.FILES:
+                medical_record = MedicalRecord(
+                    patient=request.user,
+                    appointment=appointment,
+                    file=request.FILES['medical_record'],
+                    description=request.POST.get('medical_record_description', '')
+                )
+                medical_record.save()
+
+            return render(request, 'clinic/booking_success.html', {
+                'appointment': appointment,
+                'token_number': appointment.token_number
+            })
     else:
         form = AppointmentForm()
     return render(request, 'clinic/book_appointment.html', {'form': form})
@@ -195,7 +240,11 @@ def doctor_dashboard(request):
         return redirect('dashboard')
     
     update_token_status()
-    today = timezone.now().date()
+    today = timezone.localtime().date()
+    print('DEBUG: Today according to server:', today)
+    print('DEBUG: All appointments for today (doctor):')
+    for a in Appointment.objects.filter(date_time__date=today):
+        print(f'ID: {a.id}, Date: {a.date_time}, Doctor: {a.doctor}, Patient: {a.patient}, Status: {a.status}')
     
     appointments = Appointment.objects.filter(
         doctor=request.user,
@@ -211,6 +260,7 @@ def doctor_dashboard(request):
         'waiting_count': waiting_count,
         'visited_count': visited_count,
         'priority_count': priority_count,
+        'today': today,
     }
     
     return render(request, 'clinic/doctor_dashboard/doctor_dashboard.html', context)
@@ -238,6 +288,7 @@ def skip_patient(request, appointment_id):
 def admin_dashboard(request):
     if not (request.user.role == 'admin' or request.user.is_superuser):
         return redirect('dashboard')
+    today = timezone.localtime().date()
     today = timezone.now().date()
     appointments = Appointment.objects.filter(date_time__date=today).order_by('token_number')
     total_appointments = appointments.count()
@@ -344,4 +395,46 @@ def doctor_settings(request):
     if request.user.role != 'doctor':
         return redirect('dashboard')
     return render(request, 'clinic/doctor_dashboard/doctor_settings.html')
+
+@login_required
+def upload_medical_record(request, appointment_id):
+    if request.user.role != 'patient':
+        return redirect('dashboard')
+    
+    try:
+        appointment = Appointment.objects.get(id=appointment_id, patient=request.user)
+    except Appointment.DoesNotExist:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = MedicalRecordForm(request.POST, request.FILES)
+        if form.is_valid():
+            medical_record = form.save(commit=False)
+            medical_record.patient = request.user
+            medical_record.appointment = appointment
+            medical_record.save()
+            return redirect('dashboard')
+    else:
+        form = MedicalRecordForm()
+    
+    return render(request, 'clinic/upload_medical_record.html', {
+        'form': form,
+        'appointment': appointment
+    })
+
+@login_required
+def view_medical_records(request, appointment_id):
+    if request.user.role != 'doctor':
+        return redirect('dashboard')
+    
+    try:
+        appointment = Appointment.objects.get(id=appointment_id, doctor=request.user)
+        medical_records = MedicalRecord.objects.filter(appointment=appointment)
+    except Appointment.DoesNotExist:
+        return redirect('dashboard')
+    
+    return render(request, 'clinic/view_medical_records.html', {
+        'appointment': appointment,
+        'medical_records': medical_records
+    })
 

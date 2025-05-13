@@ -1,0 +1,106 @@
+{% extends 'clinic/base.html' %}
+
+{% block title %}Appointment Booked Successfully - Smart Queue Clinic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-card {
+        max-width: 600px;
+        margin: 40px auto;
+        text-align: center;
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 30px;
+    }
+    
+    .success-icon {
+        font-size: 64px;
+        color: var(--secondary-color);
+        margin: 20px 0;
+    }
+    
+    .token-number {
+        font-size: 48px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin: 20px 0;
+        padding: 20px;
+        background-color: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+    
+    .details-list {
+        text-align: left;
+        margin: 30px 0;
+        padding: 20px;
+        background-color: var(--light-color);
+        border-radius: var(--border-radius);
+    }
+    
+    .details-list p {
+        margin: 10px 0;
+    }
+    
+    .important-note {
+        margin: 30px 0;
+        padding: 20px;
+        background-color: #fff3cd;
+        border-radius: var(--border-radius);
+        text-align: left;
+    }
+    
+    .important-note h4 {
+        color: #856404;
+        margin-bottom: 10px;
+    }
+    
+    .action-buttons {
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    @media print {
+        .action-buttons {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-card">
+    <div class="card-header">
+        <h2>Appointment Booked Successfully!</h2>
+    </div>
+    
+    <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    
+    <div class="appointment-details">
+        <h3>Your Token Number</h3>
+        <div class="token-number">#{{ token_number }}</div>
+        
+        <div class="details-list">
+            <p><strong>Doctor:</strong> Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}</p>
+            <p><strong>Date:</strong> {{ appointment.date_time|date:"F j, Y" }}</p>
+            <p><strong>Time:</strong> {{ appointment.date_time|time:"H:i" }}</p>
+            <p><strong>Department:</strong> {{ appointment.doctor.department.name }}</p>
+        </div>
+    </div>
+    
+    <div class="important-note">
+        <h4>Important Note</h4>
+        <p>Please remember your token number (#{{ token_number }}). You will need it when you visit the clinic.</p>
+        <p>Please arrive at least 15 minutes before your appointment time.</p>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+        <button onclick="window.print()" class="btn btn-secondary">Print Details</button>
+    </div>
+</div>
+{% endblock %} 

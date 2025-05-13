@@ -1,0 +1,35 @@
+{% extends 'clinic/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Upload Medical Record</h2>
+            <p>Appointment with Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }} on {{ appointment.date_time|date:"F j, Y" }}</p>
+        </div>
+        
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_file">Medical Record File</label>
+                    {{ form.file.errors }}
+                    {{ form.file }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_description">Description</label>
+                    {{ form.description.errors }}
+                    {{ form.description }}
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Upload Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

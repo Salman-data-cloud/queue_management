@@ -615,6 +615,64 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Today's Appointments -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Today's Appointments</h3>
+                </div>
+                <div class="card-body">
+                    <table class="appointment-table">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                                <tr {% if appointment.is_priority %}class="priority-row"{% endif %}>
+                                    <td>
+                                        <span class="token-badge">#{{ appointment.token_number }}</span>
+                                    </td>
+                                    <td>{{ appointment.patient.get_full_name|default:appointment.patient.username }}</td>
+                                    <td>{{ appointment.date_time|time:"H:i" }}</td>
+                                    <td>
+                                        <span class="status-badge {{ appointment.status }}">
+                                            {{ appointment.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            {% if appointment.status == 'pending' %}
+                                                <a href="{% url 'prioritize_patient' appointment.id %}" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-star"></i> Prioritize
+                                                </a>
+                                                <a href="{% url 'mark_visited' appointment.id %}" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-check"></i> Mark Visited
+                                                </a>
+                                                <a href="{% url 'skip_patient' appointment.id %}" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-forward"></i> Skip
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'view_medical_records' appointment.id %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-file-medical"></i> View Records
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No appointments for today</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
     

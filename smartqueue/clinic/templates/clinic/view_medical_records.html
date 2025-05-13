@@ -1,0 +1,86 @@
+{% extends 'clinic/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Medical Records</h2>
+            <p>Patient: {{ appointment.patient.get_full_name|default:appointment.patient.username }}</p>
+            <p>Appointment Date: {{ appointment.date_time|date:"F j, Y" }}</p>
+        </div>
+        
+        <div class="card-body">
+            {% if medical_records %}
+                <div class="medical-records-list">
+                    {% for record in medical_records %}
+                        <div class="medical-record-item">
+                            <div class="record-info">
+                                <h4>Record #{{ forloop.counter }}</h4>
+                                <p class="upload-date">Uploaded on: {{ record.uploaded_at|date:"F j, Y H:i" }}</p>
+                                {% if record.description %}
+                                    <p class="description">{{ record.description }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="record-actions">
+                                <a href="{{ record.file.url }}" class="btn btn-primary" target="_blank">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-records">No medical records have been uploaded for this appointment.</p>
+            {% endif %}
+            
+            <div class="back-button">
+                <a href="{% url 'doctor_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .medical-records-list {
+        margin-top: 20px;
+    }
+    
+    .medical-record-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .record-info h4 {
+        margin: 0 0 10px 0;
+        color: #2c3e50;
+    }
+    
+    .upload-date {
+        color: #6c757d;
+        font-size: 0.9em;
+        margin: 5px 0;
+    }
+    
+    .description {
+        margin: 10px 0;
+        color: #495057;
+    }
+    
+    .no-records {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+    }
+    
+    .back-button {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %} 

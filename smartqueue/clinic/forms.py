@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import User, Appointment, Feedback, Department, DoctorTimeSlot
+from .models import User, Appointment, Feedback, Department, DoctorTimeSlot, MedicalRecord
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -16,6 +16,9 @@ class CustomUserCreationForm(UserCreationForm):
 class AppointmentForm(forms.ModelForm):
     department = forms.ModelChoiceField(queryset=Department.objects.all(), required=True)
     time_slot = forms.ModelChoiceField(queryset=DoctorTimeSlot.objects.none(), required=True, label="Available Time Slot")
+    medical_record = forms.FileField(required=False, label="Upload Medical Record")
+    medical_record_description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter a description of your medical record'}), required=False)
+
     class Meta:
         model = Appointment
         fields = ('department', 'doctor', 'date_time', 'time_slot')
@@ -43,7 +46,6 @@ class AppointmentForm(forms.ModelForm):
 
         elif self.instance.pk and self.instance.doctor:
             self.fields['time_slot'].queryset = DoctorTimeSlot.objects.filter(doctor=self.instance.doctor)
-
         else:
             self.fields['time_slot'].queryset = DoctorTimeSlot.objects.none()
             
@@ -55,5 +57,13 @@ class FeedbackForm(forms.ModelForm):
         fields = ('doctor', 'rating', 'comment')
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter your feedback'}),
+        }
+
+class MedicalRecordForm(forms.ModelForm):
+    class Meta:
+        model = MedicalRecord
+        fields = ('file', 'description')
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Enter a description of the medical record'}),
         }
 

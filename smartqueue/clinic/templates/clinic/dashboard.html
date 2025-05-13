@@ -203,6 +203,61 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        .prescriptions-list {
+            margin-top: 20px;
+        }
+        
+        .prescription-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .prescription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .prescription-header h4 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .prescription-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        .prescription-content {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .prescription-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .department-badge {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        
+        .no-prescriptions {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +302,71 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Your Appointments</h3>
+                </div>
+                <div class="card-content">
+                    {% if appointments %}
+                        <ul class="appointment-list">
+                            {% for appointment in appointments %}
+                                <li class="appointment-item">
+                                    <div class="appointment-details">
+                                        <span class="appointment-doctor">Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}</span>
+                                        <span class="appointment-date">{{ appointment.date_time|date:"F j, Y H:i" }}</span>
+                                        <span class="appointment-token">Token #{{ appointment.token_number }}</span>
+                                        {% if appointment.is_priority %}
+                                            <span class="priority-badge">Priority</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="appointment-actions">
+                                        {% if appointment.status == 'pending' %}
+                                            <a href="{% url 'upload_medical_record' appointment.id %}" class="btn btn-primary">
+                                                <i class="fas fa-upload"></i> Upload Medical Record
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No appointments scheduled for today.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if request.user.role == 'patient' %}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Prescriptions & Medical Advice</h3>
+                </div>
+                <div class="card-content">
+                    {% if appointments %}
+                        <div class="prescriptions-list">
+                            {% for appointment in appointments %}
+                                {% if appointment.prescription %}
+                                    <div class="prescription-item">
+                                        <div class="prescription-header">
+                                            <h4>Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}</h4>
+                                            <span class="prescription-date">{{ appointment.prescription_date|date:"F j, Y" }}</span>
+                                        </div>
+                                        <div class="prescription-content">
+                                            {{ appointment.prescription|linebreaks }}
+                                        </div>
+                                        <div class="prescription-footer">
+                                            <span class="department-badge">{{ appointment.doctor.department.name }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="no-prescriptions">No prescriptions or medical advice available.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     

@@ -39,6 +39,8 @@ class Appointment(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     token_number = models.PositiveIntegerField()
     is_priority = models.BooleanField(default=False)
+    prescription = models.TextField(blank=True, null=True)
+    prescription_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Appointment {self.id} - {self.patient} with {self.doctor} on {self.date_time}"
@@ -52,3 +54,16 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback by {self.patient} for {self.doctor} ({self.rating})"
+
+class MedicalRecord(models.Model):
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='medical_records')
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='medical_records')
+    file = models.FileField(upload_to='medical_records/')
+    description = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Medical Record for {self.patient} - {self.uploaded_at}"
+
+    class Meta:
+        ordering = ['-uploaded_at']
