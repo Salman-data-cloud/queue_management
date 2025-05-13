@@ -5,10 +5,12 @@ from .models import Appointment, User, Feedback, DoctorTimeSlot, Department, Med
 from django.utils import timezone
 from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 def register(request):
     if request.method == 'POST':
@@ -145,11 +147,15 @@ def book_appointment(request):
                     form.add_error('doctor', 'You already have an appointment with a doctor from this department.')
                     return render(request, 'clinic/book_appointment.html', {'form': form})
 
-            for i in patient_appointments:
-                if i.date_time == appointment_datetime:
-                    form.add_error('date_time', 'You already have an appointment at this time.')
-                    return render(request, 'clinic/book_appointment.html', {'form': form})
-                
+            # Prevent double booking for the same doctor and slot by any patient
+            if Appointment.objects.filter(
+                doctor=doctor,
+                date_time=timezone.make_aware(appointment_datetime),
+                status='pending'
+            ).exists():
+                form.add_error('date_time', 'This slot is already booked for this doctor. Please choose another slot.')
+                return render(request, 'clinic/book_appointment.html', {'form': form})
+
             # Check if doctor has any appointment at the same time
             if Appointment.objects.filter(
                 doctor=doctor,
@@ -286,8 +292,8 @@ def skip_patient(request, appointment_id):
 def admin_dashboard(request):
     if not (request.user.role == 'admin' or request.user.is_superuser):
         return redirect('dashboard')
-    today = timezone.localtime().date()
-    appointments = Appointment.objects.filter(date_time__date=today).order_by('token_number')
+    #today = timezone.localtime().date()
+    appointments = Appointment.objects.all().order_by('token_number')
     total_appointments = appointments.count()
     visited = appointments.filter(status='visited').count()
     missed = appointments.filter(status='missed').count()
@@ -433,4 +439,66 @@ def view_medical_records(request, appointment_id):
         'appointment': appointment,
         'medical_records': medical_records
     })
+
+@login_required
+def admin_report_pdf(request):
+    if not (request.user.role == 'admin' or request.user.is_superuser):
+        return redirect('dashboard')
+    from django.utils import timezone
+    today = timezone.localtime().date()
+    appointments = Appointment.objects.filter(date_time__date=today)
+    total_appointments = appointments.count()
+    visited = appointments.filter(status='visited').count()
+    missed = appointments.filter(status='missed').count()
+    skipped = appointments.filter(status='skipped').count()
+    waiting_count = appointments.filter(status='pending').count()
+    priority_count = appointments.filter(is_priority=True).count()
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="clinic_report_{today}.pdf"'
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+    y = height - 50
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(50, y, "Smart Queue Clinic - Daily Report")
+    y -= 30
+    p.setFont("Helvetica", 12)
+    p.drawString(50, y, f"Date: {today}")
+    y -= 30
+    p.drawString(50, y, f"Total Appointments: {total_appointments}")
+    y -= 20
+    p.drawString(50, y, f"Visited: {visited}")
+    y -= 20
+    p.drawString(50, y, f"Missed: {missed}")
+    y -= 20
+    p.drawString(50, y, f"Skipped: {skipped}")
+    y -= 20
+    p.drawString(50, y, f"Waiting: {waiting_count}")
+    y -= 20
+    p.drawString(50, y, f"Priority: {priority_count}")
+    y -= 40
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "Appointments:")
+    y -= 20
+    p.setFont("Helvetica", 10)
+    for app in appointments:
+        if y < 60:
+            p.showPage()
+            y = height - 50
+        p.drawString(50, y, f"Token: {app.token_number}, Patient: {app.patient.get_full_name() or app.patient.username}, Doctor: {app.doctor.get_full_name() or app.doctor.username}, Time: {app.date_time.strftime('%H:%M')}, Status: {app.status}")
+        y -= 15
+    p.showPage()
+    p.save()
+    return response
+
+@login_required
+def cancel_appointment(request, appointment_id):
+    try:
+        appointment = Appointment.objects.get(id=appointment_id, patient=request.user)
+        if appointment.status == 'pending':
+            appointment.status = 'cancelled'
+            appointment.save()
+    except Appointment.DoesNotExist:
+        pass
+    return redirect('dashboard')
 

@@ -15,7 +15,9 @@ urlpatterns = [
     path('mark_visited/<int:appointment_id>/', views.mark_visited, name='mark_visited'),
     path('skip/<int:appointment_id>/', views.skip_patient, name='skip_patient'),
     path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin_dashboard/report/', views.admin_report_pdf, name='admin_report_pdf'),
     path('api/queue-status/', views.queue_status, name='queue_status'),
     path('upload-medical-record/<int:appointment_id>/', views.upload_medical_record, name='upload_medical_record'),
     path('view-medical-records/<int:appointment_id>/', views.view_medical_records, name='view_medical_records'),
+    path('cancel-appointment/<int:appointment_id>/', views.cancel_appointment, name='cancel_appointment'),
 ]
