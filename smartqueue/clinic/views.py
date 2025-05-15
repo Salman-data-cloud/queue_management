@@ -446,7 +446,11 @@ def admin_report_pdf(request):
         return redirect('dashboard')
     from django.utils import timezone
     today = timezone.localtime().date()
+    print(f"--- PDF REPORT DEBUG: 'today' is {today} ---")
     appointments = Appointment.objects.filter(date_time__date=today)
+    print(f"--- PDF REPORT DEBUG: Found {appointments.count()} appointments for {today} before status filtering ---")
+    for app in appointments:
+        print(f"--- PDF REPORT DEBUG: App ID {app.id}, DateTime: {app.date_time}, Status: {app.status} ---")
     total_appointments = appointments.count()
     visited = appointments.filter(status='visited').count()
     missed = appointments.filter(status='missed').count()
