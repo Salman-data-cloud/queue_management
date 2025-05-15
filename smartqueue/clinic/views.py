@@ -173,7 +173,7 @@ def book_appointment(request):
             if appointment.doctor == request.user:
                 form.add_error('doctor', 'You cannot book an appointment with yourself.')
                 return render(request, 'clinic/book_appointment.html', {'form': form})
-            appointment.token_number = generate_token_number(appointment.doctor)
+            appointment.token_number = generate_token_number(appointment.doctor, appointment_datetime.date())
             appointment.save()
 
             # Send confirmation email with token number
@@ -225,8 +225,11 @@ def give_feedback(request):
         form = FeedbackForm()
     return render(request, 'clinic/give_feedback.html', {'form': form})
 
-def generate_token_number(doctor):
-    last_appointment = Appointment.objects.filter(doctor=doctor).order_by('-token_number').first()
+def generate_token_number(doctor, appointment_date):
+    last_appointment = Appointment.objects.filter(
+        doctor=doctor,
+        date_time__date=appointment_date
+    ).order_by('-token_number').first()
     if last_appointment:
         return last_appointment.token_number + 1
     return 1
